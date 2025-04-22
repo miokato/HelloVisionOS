@@ -14,45 +14,56 @@ struct ToggleImmersiveSpaceButton: View {
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     
+    // MARK: - methods
+    
+    /// IDを指定してImmersive spaceを開く
+    private func openImmersiveSpace() async {
+        switch await openImmersiveSpace(id: Constants.draggableBoxID) {
+        case .opened:
+            log("Already opened")
+            // ImmersiveView.onAppear() に複数のパスがある可能性があるため、
+            // immersiveSpaceState を .open に設定するのは ImmersiveView.onAppear() 内だけ にしてください。
+            // それ以外の場所では .open を設定しないようにしましょう。
+            break
+        case .userCancelled, .error:
+            log("UserCancelled or error")
+            // エラーが発生した場合は、イマーシブスペースのオープンに失敗したことを示すために、immersiveSpaceState を .closed に設定する必要があります。
+            fallthrough
+        @unknown default:
+            // 不明なレスポンスを受け取った場合は、スペースが開かなかったと見なして、immersiveSpaceState を .closed に設定してください。
+            appModel.immersiveSpaceState = .closed
+        }
+    }
+    
+    /// Appの状態に応じてImmersiveSpaceの開閉をハンドリング
+    private func handleImmersiveSpace() {
+        Task {
+            switch appModel.immersiveSpaceState {
+            case .open:
+                log("To close immersive space")
+                appModel.immersiveSpaceState = .inTransition
+                await dismissImmersiveSpace()
+                // ImmersiveView.onDisappear() には複数のパスが存在するため、
+                // immersiveSpaceState を .closed に設定するのは ImmersiveView.onDisappear() 内だけ にしてください。
+                // それ以外の場所で .closed を設定しないようにしましょう。
+                
+            case .closed:
+                appModel.immersiveSpaceState = .inTransition
+                await openImmersiveSpace()
+                
+            case .inTransition:
+                log("inTransition")
+                // このケースは発生しないはずです。なぜなら、このケースではボタンが無効化されているからです。
+                break
+            }
+        }
+    }
+    
+    // MARK: - body
+    
     var body: some View {
         Button {
-            Task { @MainActor in
-                switch appModel.immersiveSpaceState {
-                case .open:
-                    log("open")
-                    appModel.immersiveSpaceState = .inTransition
-                    await dismissImmersiveSpace()
-                    // Don't set immersiveSpaceState to .closed because there
-                    // are multiple paths to ImmersiveView.onDisappear().
-                    // Only set .closed in ImmersiveView.onDisappear().
-                    
-                case .closed:
-                    log("closed")
-                    appModel.immersiveSpaceState = .inTransition
-                    switch await openImmersiveSpace(id: Constants.draggableBoxID) {
-                    case .opened:
-                        log("already opened")
-                        // Don't set immersiveSpaceState to .open because there
-                        // may be multiple paths to ImmersiveView.onAppear().
-                        // Only set .open in ImmersiveView.onAppear().
-                        break
-                        
-                    case .userCancelled, .error:
-                        log("userCancelled or error")
-                        // On error, we need to mark the immersive space
-                        // as closed because it failed to open.
-                        fallthrough
-                    @unknown default:
-                        // On unknown response, assume space did not open.
-                        appModel.immersiveSpaceState = .closed
-                    }
-                    
-                case .inTransition:
-                    log("inTransition")
-                    // This case should not ever happen because button is disabled for this case.
-                    break
-                }
-            }
+            handleImmersiveSpace()
         } label: {
             Text(appModel.immersiveSpaceState == .open ? "Hide Immersive Space" : "Show Immersive Space")
         }
