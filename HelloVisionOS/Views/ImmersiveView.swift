@@ -10,6 +10,8 @@ import RealityKit
 
 struct ImmersiveView: View {
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    @Environment(\.openWindow) var openWindow
+    @Environment(AppModel.self) private var appModel
     
     let rootEntity = Entity()
     let objectEntity = Entity()
@@ -105,11 +107,11 @@ struct ImmersiveView: View {
             } attachments: {
                 Attachment(id: "panel") {
                     HStack {
-                        Button("HELLO") {
-                            print("HELLO")
-                        }
-                        Button("WORLD") {
-                            print("WORLD")
+                        Button("Home画面へ") {
+                            Task {
+                                await dismissImmersiveSpace()
+                                openWindow(id: appModel.windowSpaceID)
+                            }
                         }
                     }
                 }

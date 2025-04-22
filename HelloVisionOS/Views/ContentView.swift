@@ -30,12 +30,6 @@ struct ContentView: View {
                     openWindow(id: Constants.volumetricWindowID)
                     
                 }
-                Button("Two") {
-                    
-                }
-                Button("Three") {
-                    
-                }
             }
         }
         .onChange(of: appModel.immersiveSpaceState, onChangeImmersiveState)
