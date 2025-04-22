@@ -18,10 +18,10 @@ struct HelloVisionOSApp: App {
 //        }
 //        .windowStyle(.automatic)
 
-//        WindowGroup {
-//            ContentView()
-//                .environment(appModel)
-//        }
+        WindowGroup {
+            ContentView()
+                .environment(appModel)
+        }
 //        
 //        WindowGroup(id: Constants.volumetricWindowID) {
 //            BoxView()

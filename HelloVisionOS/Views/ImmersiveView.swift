@@ -9,9 +9,12 @@ import SwiftUI
 import RealityKit
 
 struct ImmersiveView: View {
+    @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
+    
     let rootEntity = Entity()
     let objectEntity = Entity()
     
+    @State private var boxEntity: ModelEntity?
     @State private var initialPosition: SIMD3<Float>? = nil
     @State private var initialScale: SIMD3<Float>? = nil
     @State private var initialTransform: Transform?
@@ -84,14 +87,36 @@ struct ImmersiveView: View {
     // MARK: - body
     
     var body: some View {
-        RealityView { content in
-            objectEntity.addChild(EntityProvider.createBox())
-            objectEntity.position = .init(x: 0, y: 1.5, z: -2.0)
-            rootEntity.addChild(objectEntity)
-
-            content.add(rootEntity)
+        ZStack {
+            RealityView { content, attachments in
+                boxEntity = EntityProvider.createBox()
+                objectEntity.addChild(boxEntity!)
+                objectEntity.position = .init(x: 0, y: 1.5, z: -1.0)
+                rootEntity.addChild(objectEntity)
+                
+                content.add(rootEntity)
+                if let panelAttachment = attachments.entity(for: "panel") {
+                    content.add(panelAttachment)
+                }
+            } update: { content, attachments in
+                if let text = attachments.entity(for: "panel") {
+                    text.position = objectEntity.position + [0, 0.2, 0]
+                }
+            } attachments: {
+                Attachment(id: "panel") {
+                    HStack {
+                        Button("HELLO") {
+                            print("HELLO")
+                        }
+                        Button("WORLD") {
+                            print("WORLD")
+                        }
+                    }
+                }
+                
+            }
+            .gesture(combindGesture)
         }
-        .gesture(combindGesture)
     }
 }
 

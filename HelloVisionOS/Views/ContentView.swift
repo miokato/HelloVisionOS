@@ -11,9 +11,15 @@ import RealityKit
 
 struct ContentView: View {
     @Environment(\.openWindow) var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(AppModel.self) private var appModel
     
     let rootEntity = Entity()
     
+    private func onChangeImmersiveState() {
+        guard appModel.immersiveSpaceState == .open else { return }
+        dismissWindow()
+    }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -32,6 +38,7 @@ struct ContentView: View {
                 }
             }
         }
+        .onChange(of: appModel.immersiveSpaceState, onChangeImmersiveState)
     }
 }
 
