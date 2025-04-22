@@ -6,13 +6,16 @@
 //
 
 import SwiftUI
+import RealityKit
 
 struct BoxView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        RealityView { content in
+            content.add(EntityProvider.roundedBoxEntity)
+        }
     }
 }
 
-#Preview {
+#Preview(windowStyle: .automatic) {
     BoxView()
 }
