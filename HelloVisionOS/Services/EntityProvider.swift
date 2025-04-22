@@ -5,8 +5,9 @@
 //  Created by mio kato on 2025/04/20.
 //
 
-import RealityKit
+@preconcurrency import RealityKit
 
+@MainActor
 enum EntityProvider {
     static let whiteMaterial = SimpleMaterial(color: .white, isMetallic: false)
     
