@@ -7,17 +7,31 @@
 
 import SwiftUI
 import RealityKit
-import RealityKitContent
+
 
 struct ContentView: View {
+    @Environment(\.openWindow) var openWindow
+    
+    let rootEntity = Entity()
+    
 
     var body: some View {
-        VStack {
+        VStack(spacing: 8) {
             Text("Hello, world!")
-
             ToggleImmersiveSpaceButton()
+            HStack(spacing: 8) {
+                Button("One") {
+                    openWindow(id: Constants.volumetricWindowID)
+                    
+                }
+                Button("Two") {
+                    
+                }
+                Button("Three") {
+                    
+                }
+            }
         }
-        .padding()
     }
 }
 

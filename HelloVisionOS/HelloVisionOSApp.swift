@@ -13,12 +13,23 @@ struct HelloVisionOSApp: App {
     @State private var appModel = AppModel()
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environment(appModel)
-        }
+//        WindowGroup {
+//            SpatialAudioView()
+//        }
+//        .windowStyle(.automatic)
 
-        ImmersiveSpace(id: appModel.immersiveSpaceID) {
+//        WindowGroup {
+//            ContentView()
+//                .environment(appModel)
+//        }
+//        
+//        WindowGroup(id: Constants.volumetricWindowID) {
+//            BoxView()
+//                .environment(appModel)
+//        }
+//        .windowStyle(.volumetric)
+//
+        ImmersiveSpace(id: Constants.draggableBoxID) {
             ImmersiveView()
                 .environment(appModel)
                 .onAppear {
