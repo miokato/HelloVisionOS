@@ -7,25 +7,91 @@
 
 import SwiftUI
 import RealityKit
-import RealityKitContent
 
 struct ImmersiveView: View {
+    let rootEntity = Entity()
+    let objectEntity = Entity()
+    
+    @State private var initialPosition: SIMD3<Float>? = nil
+    @State private var initialScale: SIMD3<Float>? = nil
+    @State private var initialTransform: Transform?
+    
+    /// スケールとY軸回転のジェスチャー
+    private var combindGesture: some Gesture {
+        translationGesture
+            .simultaneously(with: scaleGesture)
+            .simultaneously(with: rotationGesture)
+    }
 
+    /// 移動ジェスチャー
+    private var translationGesture: some Gesture {
+        DragGesture()
+            .targetedToAnyEntity()
+            .onChanged({ value in
+                let entity = value.entity
+                if initialPosition == nil {
+                    initialPosition = entity.position
+                }
+                let movement = value.convert(
+                    value.translation3D,
+                    from: .global,
+                    to: .scene
+                )
+                entity.position = (initialPosition ?? .zero) + movement
+            })
+            .onEnded({ _ in
+                initialPosition = nil
+            })
+    }
+    
+    /// 拡大縮小ジェスチャー
+    private var scaleGesture: some Gesture {
+        MagnifyGesture()
+            .targetedToAnyEntity()
+            .onChanged { value in
+                let entity = value.entity
+                if initialScale == nil {
+                    initialScale = entity.scale
+                }
+                let scaleRate: Float = 1.0
+                entity.scale = (initialScale ?? .init(repeating: scaleRate)) * Float(value.gestureValue.magnification)
+            }
+            .onEnded { _ in
+                initialScale = nil
+            }
+    }
+    
+    /// Y軸回転のジェスチャー
+    private var rotationGesture: some Gesture {
+        RotationGesture()
+            .targetedToAnyEntity()
+            .onChanged { value in
+                let entity = value.entity
+                if initialTransform == nil {
+                    initialTransform = entity.transform
+                }
+                let delta = Float(value.gestureValue.radians)
+                var t = initialTransform!
+                let q = simd_quatf(angle: delta, axis: [0, 1, 0])
+                t.rotation = q * t.rotation
+                entity.transform = t
+            }
+            .onEnded { _ in
+                initialTransform = nil
+            }
+    }
+    
+    // MARK: - body
+    
     var body: some View {
         RealityView { content in
-            let material = SimpleMaterial(color: .red, isMetallic: false)
-            let box = ModelEntity(
-                mesh: .generateBox(size: 0.3),
-                materials: [material]
-            )
-            box.position = .init(x: -0.5, y: 2.5, z: -2.0)
-            box.generateCollisionShapes(recursive: false)
-            box.components[InputTargetComponent.self] = InputTargetComponent(
-                allowedInputTypes: .all
-            )
-            
-            content.add(box)
+            objectEntity.addChild(EntityProvider.createBox())
+            objectEntity.position = .init(x: 0, y: 1.5, z: -2.0)
+            rootEntity.addChild(objectEntity)
+
+            content.add(rootEntity)
         }
+        .gesture(combindGesture)
     }
 }
 
