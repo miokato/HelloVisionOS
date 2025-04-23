@@ -7,12 +7,14 @@
 
 import SwiftUI
 import RealityKit
+import ARKit
 
 struct ImmersiveView: View {
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     @Environment(\.openWindow) var openWindow
     @Environment(AppModel.self) private var appModel
     
+    let arkitService = ARKitService()
     let rootEntity = Entity()
     let objectEntity = Entity()
     
@@ -86,6 +88,25 @@ struct ImmersiveView: View {
             }
     }
     
+    // MARK: - タップ処理
+    private func handleTap(_ entity: Entity) {
+        guard let anchor = entity.anchor as? PlaneAnchor else { return }
+        
+        // 床でなければ無視
+        guard anchor.classification == .floor else { return }
+        
+        guard let base = boxEntity?.clone(recursive: true) else { return }
+        
+        // ピボットの中心を床に合わせて配置
+        base.position = entity.position(relativeTo: nil)
+        
+        // 回転・スケール調整はここで
+        // base.orientation = .init(...)
+        // base.scale = .one * 0.25
+        rootEntity.addChild(base)
+        
+    }
+    
     // MARK: - body
     
     var body: some View {
@@ -104,6 +125,10 @@ struct ImmersiveView: View {
                 if let text = attachments.entity(for: "panel") {
                     text.position = objectEntity.position + [0, 0.2, 0]
                 }
+                // PlaceDetectionProviderで床検出
+                for entity in arkitService.planeEntities.values where !content.entities.contains(entity) {
+                    content.add(entity)
+                }
             } attachments: {
                 Attachment(id: "panel") {
                     HStack {
@@ -117,7 +142,17 @@ struct ImmersiveView: View {
                 }
                 
             }
+            .gesture(
+                TapGesture()
+                    .targetedToAnyEntity()
+                    .onEnded { value in
+                        handleTap(value.entity)
+                    }
+            )
             .gesture(combindGesture)
+            .task {
+                try? await arkitService.startPlaneDetection()
+            }
         }
     }
 }
